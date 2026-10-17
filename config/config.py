@@ -1,10 +1,12 @@
 from __future__ import annotations
 
+import os
+
 # ======================= Core Service ====================== #
-API_HOST = "127.0.0.1"
-API_PORT = 18080
-USE_STREAM_RESPONSE = True
-ENABLE_DATABASE_WRITE = True
+API_HOST = os.getenv("OVERSTATS_API_HOST", "127.0.0.1")
+API_PORT = int(os.getenv("OVERSTATS_API_PORT", "18080"))
+USE_STREAM_RESPONSE = os.getenv("OVERSTATS_USE_STREAM_RESPONSE", "true").lower() in ("1", "true", "yes")
+ENABLE_DATABASE_WRITE = os.getenv("OVERSTATS_ENABLE_DATABASE_WRITE", "true").lower() in ("1", "true", "yes")
 
 # 在使用大神数据或素材的渲染图片底部显示战绩查询宣传横幅。
 # True 显示，False 不显示；修改后重启服务生效。
@@ -16,18 +18,30 @@ HERO_MODULE_MODE = 0
 
 # ======================= Dashen Upstream ====================== #
 # Configure at least one account.
-DASHEN_ACCOUNTS = [
-    {
-        "name": "account-1",
-        "role_id": 123456789,
-        "token": "replace-with-your-token",
-    },
-    # {
-    #     "name": "account-2",
-    #     "role_id": 987654321,
-    #     "token": "replace-with-your-token",
-    # },
-]
+_env_role_id = os.getenv("OVERSTATS_DASHEN_ROLE_ID")
+_env_token = os.getenv("OVERSTATS_DASHEN_TOKEN")
+
+if _env_role_id and _env_token:
+    DASHEN_ACCOUNTS = [
+        {
+            "name": "env-account",
+            "role_id": int(_env_role_id),
+            "token": _env_token,
+        }
+    ]
+else:
+    DASHEN_ACCOUNTS = [
+        {
+            "name": "account-1",
+            "role_id": 123456789,
+            "token": "replace-with-your-token",
+        },
+        # {
+        #     "name": "account-2",
+        #     "role_id": 987654321,
+        #     "token": "replace-with-your-token",
+        # },
+    ]
 
 DASHEN_DTS = 2026
 DASHEN_SERVER = 1
@@ -48,7 +62,7 @@ DASHEN_MAX_CONCURRENT_REQUESTS = 2
 DASHEN_MAX_ACCEPTED_REQUESTS = max(len(DASHEN_ACCOUNTS) * 4, 1)
 
 # Optional proxy settings.
-DASHEN_INTERNATIONAL_PROXY = ""
+DASHEN_INTERNATIONAL_PROXY = os.getenv("OVERSTATS_DASHEN_INTERNATIONAL_PROXY", "")
 DASHEN_NETEASE_PROXIES = [
     None,
     # "http://your-netease-proxy:port",
@@ -56,7 +70,7 @@ DASHEN_NETEASE_PROXIES = [
 
 # OW esports PandaScore API key.
 #如何获取ow赛事的apikey:访问https://app.pandascore.co/dashboard/main，注册并生成api key，每小时1000次免费调用
-OW_ESPORTS_API_KEY = ""
+OW_ESPORTS_API_KEY = os.getenv("OW_ESPORTS_API_KEY", "")
 
 # Optional external OW guess asset pack root.
 # 仅存放本地图片/音频等大资源，默认放在 Overstats 项目目录外的相邻文件夹。
@@ -77,15 +91,15 @@ OW_HERO_LEADERBOARD_CN_SEASON = 5
 # - https://api.deepseek.com/v1
 # - https://generativelanguage.googleapis.com/v1beta/openai
 # You can also provide the full /chat/completions endpoint directly.
-ANALYSIS_BASE_URL = ""
-ANALYSIS_API_KEY = "replace-with-your-analysis-api-key"
+ANALYSIS_BASE_URL = os.getenv("OVERSTATS_ANALYSIS_BASE_URL", "")
+ANALYSIS_API_KEY = os.getenv("OVERSTATS_ANALYSIS_API_KEY", "replace-with-your-analysis-api-key")
 # Optional proxy for OpenAI official and Google OpenAI-compatible endpoints.
-ANALYSIS_PROXY = ""
+ANALYSIS_PROXY = os.getenv("OVERSTATS_ANALYSIS_PROXY", "")
 
 # ANALYSIS_GOOGLE_MODEL = "gemini-3.1-flash-lite-preview"
 #ANALYSIS_DEEPSEEK_MODEL = "deepseek-chat"
 #除谷歌和deepseek以外的模型使用下面配置
-ANALYSIS_OPENAI_MODEL = ""
+ANALYSIS_OPENAI_MODEL = os.getenv("OVERSTATS_ANALYSIS_OPENAI_MODEL", "")
 
 
 # Optional proxy for external patch-note and OW hero wiki fetches.
@@ -97,6 +111,7 @@ PATCH_NOTES_INTERNATIONAL_PROXY = ""
 ANALYSIS_PERSONA_PROMPT = """
 【核心原则】
 请保持绝对客观中立，拒绝阿谀奉承！不要因为查询指令的是焦点玩家就一味夸奖，如果焦点玩家表现平庸或拉垮请直接批评。
+如果数据为0/0/0则为已退出玩家，请忽略其数据
 
 【人格设定】
 你的说话人设是科比·布莱恩特，风格包含 [man! what can i say，mamba out] 等 meme。
